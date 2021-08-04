@@ -16,9 +16,12 @@ const linter  = require("HDLlinter");
 const parser  = require("HDLparser");
 const filesys = require("HDLfilesys");
 
-function activate(context) {
-    var HDLparam = [];
+export function activate(context) {
+    //HDL Project Parameter
+    let HDLparam = [];
+    //HDL File List
     let HDLFileList = [];
+    //Project engineering parameters
     let opeParam = {
         "os"             : "",
         "rootPath"       : "",
@@ -31,9 +34,8 @@ function activate(context) {
         "prjInitParam"   : "",
         "propertyPath"   : ""
     }
-    if(filesys.prjs.getOpeParam(`${__dirname}`,opeParam) != null) {
+    if(filesys.prjs.getOpeParam(`${__dirname}`,opeParam) !== null) {
         filesys.prjs.getPrjFiles(opeParam, HDLFileList);
-    
         // Output Channel
         var outputChannel = vscode.window.createOutputChannel("HDL");
         
@@ -49,7 +51,6 @@ function activate(context) {
         if (HDLFileList.length > limitNum) {
             vscode.window.showWarningMessage(`The project has exceeded the limit of ${HDLFileList.length} HDL files, \
             so parsing and parse-related functions will be stopped directly.`);
-            // return null;
         }
         if (HDLFileList.length >= 250) {
             vscode.window.showInformationMessage(`The project contains ${HDLFileList.length} HDL files, \
@@ -83,6 +84,4 @@ function activate(context) {
         }
     }
 }
-exports.activate = activate;
-function deactivate() {}
-exports.deactivate = deactivate;
+export function deactivate() {}
