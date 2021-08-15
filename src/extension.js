@@ -16,7 +16,7 @@ const linter  = require("HDLlinter");
 const parser  = require("HDLparser");
 const filesys = require("HDLfilesys");
 
-export function activate(context) {
+function activate(context) {
     //HDL Project Parameter
     let HDLparam = [];
     //HDL File List
@@ -84,4 +84,6 @@ export function activate(context) {
         }
     }
 }
-export function deactivate() {}
+exports.activate = activate;
+function deactivate() {}
+exports.deactivate = deactivate;
