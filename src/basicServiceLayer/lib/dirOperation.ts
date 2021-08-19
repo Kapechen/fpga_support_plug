@@ -41,6 +41,26 @@ export default class dirOperation extends Operation {
         return false;
     }
     /**
+     * @description Synchronously reads and returns a string array with the names of all files in the target directory
+     * @author Kapechen
+     * @date 17/08/2021
+     * @param {string} destPath
+     * @returns {*}  {(string[])}
+     * @memberof dirOperation
+     */
+    read(destPath: string): string[] {
+        if (this.judgeExistsSync(destPath) !== Result.PAE) {
+            console.log(`Error Happens While Reading Directories:${Result.PNE}`);
+            return [];
+        }
+        try {
+            return fs.readdirSync(destPath);
+        } catch (error) {
+            console.log(error);
+            return [];
+        }
+    }
+    /**
      * @description Delete the target folder and all files/folders under the folder
      * @author Kapechen
      * @date 17/08/2021
@@ -55,7 +75,11 @@ export default class dirOperation extends Operation {
         }
         //Method returns an array of strings containing the names of all files in the specified directory
         try {
-            let tempFiles: string[] = fs.readdirSync(destPath);
+            let tempFiles: string[] = this.read(destPath);
+            if (tempFiles.length == 0) {
+                return false;
+            }
+            //let tempFiles: string[] = typeof this.read(destPath) === boolean? null:;
             tempFiles.forEach((element) => {
                 let curPath = fspath.join(destPath, element).replace(/\\/g, "\/");
                 if (fs.statSync(curPath).isDirectory()) {
@@ -72,21 +96,97 @@ export default class dirOperation extends Operation {
         }
 
     }
-    copy(srcPath: string, destPath: string, filter?: any[]): boolean {
-        throw new Error("Method not implemented.");
+    /**
+     * @description Copy files asynchronously from the source path to the destination path
+     * @author Kapechen
+     * @date 17/08/2021
+     * @param {string} srcPath
+     * @param {string} destPath
+     * @param {any[]} filter
+     * @returns {*}  {boolean}
+     * @memberof dirOperation
+     */
+    copy(srcPath: string, destPath: string, filter: any[]): boolean {
+        if (this.judgeExistsSync(srcPath) !== Result.PAE) {
+            console.error(`Error Happens While Copying Directories：${Result.PNE}`);
+            return false;
+        }
+        fs.readdir(srcPath, (err, files: string[]) => {
+            if (err) {
+                console.log(err);
+                return false;
+            }
+            files.forEach((fileName) => {
+                let fileDir: string = fspath.join(srcPath, fileName);
+                let filterFlag: boolean = filter.some((item) => {
+                    return item === fileName;
+                });
+                //Filter out files or folders that do not need to be copied
+                if (!filterFlag) {
+                    fs.stat(fileDir, (err, stats) => {
+                        if (err) {
+                            console.log(err);
+                            return false;
+                        }
+                        let isFile: boolean = stats.isFile();
+                        if (isFile) {
+                            let finalDestPath = fspath.join(destPath, fileName);
+                            fs.copyFile(fileDir, finalDestPath, (err) => {
+                                if (err) console.log(err); return false;
+                            })
+                        } else {
+                            let destFileDir = fspath.join(destPath, fileName);
+                            fs.mkdir(destFileDir, (err) => {
+                                if (err) {
+                                    console.log(err);
+                                    return false;
+                                }
+                                this.copy(fileDir, destFileDir, filter);
+                            })
+                        }
+                    })
+                }
+            });
+        })
+        return true;
     }
     move(oldPath: string, newPath: string): boolean {
-        throw new Error("Method not implemented.");
+        if (oldPath === newPath) return false;
+        if (this.judgeExistsSync(oldPath) !== Result.PAE ||
+            this.judgeExistsSync(newPath) !== Result.PAE) {
+            console.error(`Error Happens While Moving Directories：${Result.PNE}`);
+            return false;
+        }
+        // else if (this.judgeExistsSync(oldPath) == Result.NAD ||
+        //     this.judgeExistsSync(newPath) == Result.NAD) {
+        //     console.error(`Error Happens While Moving Directories：${Result.NAD}`);
+        //     return false;
+        // }
+        try {
+            let folderName: string = fspath.basename(oldPath);
+            newPath = newPath + '/' + folderName;
+            if(fs.existsSync(oldPath)){
+                if(fs.existsSync(newPath)){
+                    this.delete(newPath);
+                }
+                fs.renameSync(oldPath,newPath);
+            }else{
+                this.create(newPath);
+            }
+            return true;
+        } catch (error) {
+            console.log(error);
+            return false;
+        }
+
     }
-    read(destPath: string): boolean {
-        throw new Error("Method not implemented.");
-    }
+
     /**
      * @description Synchronously tests whether or not the given directory path or its  parent directory path exists
      * @author Kapechen
      * @date 17/08/2021
      * @param {string} path
-     * @returns {*}  {string}
+     * @returns {*} string Result.xxx
      * @memberof dirOperation
      */
     judgeExistsSync(path: string): string {

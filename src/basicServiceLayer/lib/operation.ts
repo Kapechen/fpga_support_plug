@@ -8,9 +8,9 @@
  */
 export default abstract class Operation {
     abstract create(destPath: string): boolean;
+    abstract read(destPath: string): string[] | boolean;
     abstract delete(destPath: string): boolean;
     abstract copy(srcPath: string, destPath: string, filter?: Array<any>): boolean;
     abstract move(oldPath: string, newPath: string): boolean;
-    abstract read(destPath: string): boolean;
-    abstract judgeExistsSync(path: string): string;
+    abstract judgeExistsSync(path: string): string | boolean;
 }
